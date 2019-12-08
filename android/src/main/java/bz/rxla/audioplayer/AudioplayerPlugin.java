@@ -4,6 +4,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.Log;
+import android.media.audiofx.Equalizer;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -26,6 +27,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
   private final AudioManager am;
   private final Handler handler = new Handler();
   private MediaPlayer mediaPlayer;
+  private Equalizer mEqualizer;
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -117,6 +119,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
       mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener(){
         @Override
         public void onPrepared(MediaPlayer mp) {
+          Log.w(ID, "onPrepared");
+          setupEqualizer();
           mediaPlayer.start();
           channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
         }
@@ -142,6 +146,27 @@ public class AudioplayerPlugin implements MethodCallHandler {
       channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
     }
     handler.post(sendData);
+  }
+
+  private void setupEqualizer() {
+      mEqualizer = new Equalizer(0, mediaPlayer.getAudioSessionId());
+      mEqualizer.setEnabled(true);
+
+      short bands = mEqualizer.getNumberOfBands();
+
+      final short minEQLevel = mEqualizer.getBandLevelRange()[0];
+      final short maxEQLevel = mEqualizer.getBandLevelRange()[1];
+      final short numPresets = mEqualizer.getNumberOfPresets();
+
+      Log.w(ID, "minEQLevel:" + minEQLevel);
+      Log.w(ID, "maxEQLevel:" + maxEQLevel);
+      Log.w(ID, "bands:" + bands);
+      Log.w(ID, "numPresets:" + numPresets);
+
+      for (short i = 0; i < numPresets; i++) {
+        final short presetIndex = i;
+        Log.w(ID, "presetName:" + mEqualizer.getPresetName(presetIndex));
+      }
   }
 
   private final Runnable sendData = new Runnable(){
