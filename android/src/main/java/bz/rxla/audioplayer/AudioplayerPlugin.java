@@ -13,6 +13,8 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
 
 import android.content.Context;
 import android.os.Build;
@@ -28,6 +30,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
   private final Handler handler = new Handler();
   private MediaPlayer mediaPlayer;
   private Equalizer mEqualizer;
+  private Map<String, Object> equalizerInfo = new HashMap<>();
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -65,6 +68,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
         Boolean muted = call.arguments();
         mute(muted);
         response.success(null);
+        break;
+      case "getEqualizerConfig":
+        response.success(getEqualizerConfig());
         break;
       default:
         response.notImplemented();
@@ -152,21 +158,29 @@ public class AudioplayerPlugin implements MethodCallHandler {
       mEqualizer = new Equalizer(0, mediaPlayer.getAudioSessionId());
       mEqualizer.setEnabled(true);
 
-      short bands = mEqualizer.getNumberOfBands();
-
+      final short bands = mEqualizer.getNumberOfBands();
       final short minEQLevel = mEqualizer.getBandLevelRange()[0];
       final short maxEQLevel = mEqualizer.getBandLevelRange()[1];
-      final short numPresets = mEqualizer.getNumberOfPresets();
+      final short numOfPresets = mEqualizer.getNumberOfPresets();
+      ArrayList<Object> presets = new ArrayList<>();
 
-      Log.w(ID, "minEQLevel:" + minEQLevel);
-      Log.w(ID, "maxEQLevel:" + maxEQLevel);
-      Log.w(ID, "bands:" + bands);
-      Log.w(ID, "numPresets:" + numPresets);
-
-      for (short i = 0; i < numPresets; i++) {
+      for (short i = 0; i < numOfPresets; i++) {
         final short presetIndex = i;
-        Log.w(ID, "presetName:" + mEqualizer.getPresetName(presetIndex));
+        Map<String, Object> currentPreset = new HashMap<>();
+        currentPreset.put("index", presetIndex);
+        currentPreset.put("name", mEqualizer.getPresetName(presetIndex));
+        presets.add(currentPreset);
       }
+
+      equalizerInfo.put("minEQLevel", minEQLevel);
+      equalizerInfo.put("maxEQLevel", maxEQLevel);
+      equalizerInfo.put("numOfPresets", numOfPresets);
+      equalizerInfo.put("presets", presets);
+      Log.w(ID, "equalizerInfo:" + equalizerInfo);
+  }
+
+  private Map<String, Object> getEqualizerConfig() {
+    return equalizerInfo;
   }
 
   private final Runnable sendData = new Runnable(){

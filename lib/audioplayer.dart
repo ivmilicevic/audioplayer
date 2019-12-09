@@ -18,6 +18,18 @@ enum AudioPlayerState {
   COMPLETED,
 }
 
+class EqualizerPreset{
+  int index;
+  String name;
+}
+
+class EqualizerConfig{
+  int numOfPresets;
+  int minEQLevel;
+  int maxEQLevel;
+  List<EqualizerPreset> presets;
+}
+
 const MethodChannel _channel =
     const MethodChannel('bz.rxla.flutter/audio');
 
@@ -74,6 +86,12 @@ class AudioPlayer {
   /// every 200 milliseconds. Will continously update the position of the
   /// playback if the status is [AudioPlayerState.PLAYING].
   Stream<Duration> get onAudioPositionChanged => _positionController.stream;
+
+  Future<Map<String, dynamic>> getEqualizerConfig() async { 
+    var methodResponse = await _channel.invokeMethod('getEqualizerConfig');
+
+    return new Map<String, dynamic>.from(methodResponse);
+  }
 
   Future<void> _audioPlayerStateChange(MethodCall call) async {
     switch (call.method) {
