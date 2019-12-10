@@ -31,11 +31,26 @@ class EqualizerPreset {
   }
 }
 
+class EqualizerBand {
+  int index;
+  int centerFrequency;
+  int lowerFrequency;
+  int upperFrequency;
+
+  EqualizerBand.fromMap(Map<dynamic, dynamic> map) {
+    this.index = map['index'];
+    this.centerFrequency = map['centerFrequency'];
+    this.lowerFrequency = map['lowerFrequency'];
+    this.upperFrequency = map['upperFrequency'];
+  }
+}
+
 class EqualizerConfig {
   int numOfPresets;
   int minEQLevel;
   int maxEQLevel;
   List<EqualizerPreset> presets;
+  List<EqualizerBand> bands;
 
   EqualizerConfig.fromMap(Map<String, dynamic> map) {
     this.numOfPresets = map['numOfPresets'];
@@ -43,6 +58,9 @@ class EqualizerConfig {
     this.maxEQLevel = map['maxEQLevel'];
     this.presets = map['presets'].map<EqualizerPreset>((rawPreset) {
       return EqualizerPreset.fromMap(rawPreset);
+    }).toList();
+    this.bands = map['bands'].map<EqualizerBand>((rawBand) {
+      return EqualizerBand.fromMap(rawBand);
     }).toList();
   }
 }

@@ -163,6 +163,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
       final short maxEQLevel = mEqualizer.getBandLevelRange()[1];
       final short numOfPresets = mEqualizer.getNumberOfPresets();
       ArrayList<Object> presets = new ArrayList<>();
+      ArrayList<Object> formattedBands = new ArrayList<>();
 
       for (short i = 0; i < numOfPresets; i++) {
         final short presetIndex = i;
@@ -172,10 +173,21 @@ public class AudioplayerPlugin implements MethodCallHandler {
         presets.add(currentPreset);
       }
 
+      for (short i = 0; i < bands; i++) {
+        final short bandIndex = i;
+        Map<String, Object> currentBand = new HashMap<>();
+        currentBand.put("index", bandIndex);
+        currentBand.put("centerFrequency", mEqualizer.getCenterFreq(bandIndex));
+        currentBand.put("lowerFrequency", mEqualizer.getBandFreqRange(bandIndex)[0]);
+        currentBand.put("upperFrequency", mEqualizer.getBandFreqRange(bandIndex)[1]);
+        formattedBands.add(currentBand);
+      }
+
       equalizerInfo.put("minEQLevel", minEQLevel);
       equalizerInfo.put("maxEQLevel", maxEQLevel);
       equalizerInfo.put("numOfPresets", numOfPresets);
       equalizerInfo.put("presets", presets);
+      equalizerInfo.put("bands", formattedBands);
       Log.w(ID, "equalizerInfo:" + equalizerInfo);
   }
 
