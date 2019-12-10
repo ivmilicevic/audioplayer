@@ -7,31 +7,47 @@ enum AudioPlayerState {
   /// Player is stopped. No file is loaded to the player. Calling [resume] or
   /// [pause] will result in exception.
   STOPPED,
+
   /// Currently playing a file. The user can [pause], [resume] or [stop] the
   /// playback.
   PLAYING,
+
   /// Paused. The user can [resume] the playback without providing the URL.
   PAUSED,
+
   /// The playback has been completed. This state is the same as [STOPPED],
   /// however we differentiate it because some clients might want to know when
   /// the playback is done versus when the user has stopped the playback.
   COMPLETED,
 }
 
-class EqualizerPreset{
+class EqualizerPreset {
   int index;
   String name;
+
+  EqualizerPreset.fromMap(Map<dynamic, dynamic> map) {
+    this.index = map['index'];
+    this.name = map['name'];
+  }
 }
 
-class EqualizerConfig{
+class EqualizerConfig {
   int numOfPresets;
   int minEQLevel;
   int maxEQLevel;
   List<EqualizerPreset> presets;
+
+  EqualizerConfig.fromMap(Map<String, dynamic> map) {
+    this.numOfPresets = map['numOfPresets'];
+    this.minEQLevel = map['minEQLevel'];
+    this.maxEQLevel = map['maxEQLevel'];
+    this.presets = map['presets'].map<EqualizerPreset>((rawPreset) {
+      return EqualizerPreset.fromMap(rawPreset);
+    }).toList();
+  }
 }
 
-const MethodChannel _channel =
-    const MethodChannel('bz.rxla.flutter/audio');
+const MethodChannel _channel = const MethodChannel('bz.rxla.flutter/audio');
 
 /// A plugin for controlling the on device audio player.
 ///
@@ -65,13 +81,16 @@ class AudioPlayer {
   Future<void> stop() async => await _channel.invokeMethod('stop');
 
   /// Mute sound.
-  Future<void> mute(bool muted) async => await _channel.invokeMethod('mute', muted);
+  Future<void> mute(bool muted) async =>
+      await _channel.invokeMethod('mute', muted);
 
   /// Seek to a specific position in the audio stream.
-  Future<void> seek(double seconds) async => await _channel.invokeMethod('seek', seconds);
+  Future<void> seek(double seconds) async =>
+      await _channel.invokeMethod('seek', seconds);
 
   /// Stream for subscribing to player state change events.
-  Stream<AudioPlayerState> get onPlayerStateChanged => _playerStateController.stream;
+  Stream<AudioPlayerState> get onPlayerStateChanged =>
+      _playerStateController.stream;
 
   /// Reports what the player is currently doing.
   AudioPlayerState get state => _state;
@@ -87,10 +106,10 @@ class AudioPlayer {
   /// playback if the status is [AudioPlayerState.PLAYING].
   Stream<Duration> get onAudioPositionChanged => _positionController.stream;
 
-  Future<Map<String, dynamic>> getEqualizerConfig() async { 
+  Future<EqualizerConfig> getEqualizerConfig() async {
     var methodResponse = await _channel.invokeMethod('getEqualizerConfig');
 
-    return new Map<String, dynamic>.from(methodResponse);
+    return EqualizerConfig.fromMap(Map<String, dynamic>.from(methodResponse));
   }
 
   Future<void> _audioPlayerStateChange(MethodCall call) async {
