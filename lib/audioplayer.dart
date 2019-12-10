@@ -29,6 +29,8 @@ class EqualizerPreset {
     this.index = map['index'];
     this.name = map['name'];
   }
+
+  Map<String, dynamic> toJson() => {'index': this.index, 'name': this.name};
 }
 
 class EqualizerBand {
@@ -43,6 +45,13 @@ class EqualizerBand {
     this.lowerFrequency = map['lowerFrequency'];
     this.upperFrequency = map['upperFrequency'];
   }
+
+  Map<String, dynamic> toJson() => {
+        'index': this.index,
+        'centerFrequency': this.centerFrequency,
+        'lowerFrequency': this.lowerFrequency,
+        'upperFrequency': this.upperFrequency,
+      };
 }
 
 class EqualizerConfig {
@@ -62,6 +71,22 @@ class EqualizerConfig {
     this.bands = map['bands'].map<EqualizerBand>((rawBand) {
       return EqualizerBand.fromMap(rawBand);
     }).toList();
+  }
+
+  Map<String, dynamic> toJson() {
+    List<Map<String, dynamic>> presets = this.presets != null
+        ? this.presets.map((i) => i.toJson()).toList()
+        : null;
+    List<Map<String, dynamic>> bands =
+        this.bands != null ? this.bands.map((i) => i.toJson()).toList() : null;
+
+    return {
+      'numOfPresets': this.numOfPresets,
+      'minEQLevel': this.minEQLevel,
+      'maxEQLevel': this.maxEQLevel,
+      'presets': presets,
+      'bands': bands
+    };
   }
 }
 
