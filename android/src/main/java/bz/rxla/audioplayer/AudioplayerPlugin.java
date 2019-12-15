@@ -5,6 +5,8 @@ import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.Log;
 import android.media.audiofx.Equalizer;
+import android.media.audiofx.AudioEffect;
+import android.content.Intent;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -31,6 +33,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
   private MediaPlayer mediaPlayer;
   private Equalizer mEqualizer;
   private Map<String, Object> equalizerInfo = new HashMap<>();
+  private Context mContext;
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -40,8 +43,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
   private AudioplayerPlugin(Registrar registrar, MethodChannel channel) {
     this.channel = channel;
     channel.setMethodCallHandler(this);
-    Context context = registrar.context().getApplicationContext();
-    this.am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+    mContext = registrar.context().getApplicationContext();
+    this.am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
   }
 
   @Override
@@ -93,6 +96,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     handler.removeCallbacks(sendData);
     if (mediaPlayer != null) {
       mediaPlayer.stop();
+      closeAudioFxSession();
       mediaPlayer.release();
       mediaPlayer = null;
       channel.invokeMethod("audio.onStop", null);
@@ -126,7 +130,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
         @Override
         public void onPrepared(MediaPlayer mp) {
           Log.w(ID, "onPrepared");
-          setupEqualizer();
+          //setupEqualizer();
+          startAudioFxSession();
           mediaPlayer.start();
           channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
         }
@@ -193,6 +198,20 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
   private Map<String, Object> getEqualizerConfig() {
     return equalizerInfo;
+  }
+
+  private void startAudioFxSession() {
+    Intent i = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
+    i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, "com.example.ms_capp_poc");
+    i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, mediaPlayer.getAudioSessionId());
+    mContext.sendBroadcast(i);
+  }
+
+  private void closeAudioFxSession() {
+    Intent k = new Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
+    k.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, "com.example.ms_capp_poc");
+    k.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, mediaPlayer.getAudioSessionId());
+    mContext.sendBroadcast(k);
   }
 
   private final Runnable sendData = new Runnable(){
